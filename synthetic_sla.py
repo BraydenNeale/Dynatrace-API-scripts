@@ -20,17 +20,7 @@ def dynatrace_api_request(url, token, timeseries_id, relative_time='day'):
 
 	return response.json()
 
-if __name__ == '__main__':
-	# read config
-	with open('config.json') as fp:
-		config = json.load(fp)
-
-	url = config.get('url')
-	token = config.get('token')
-	timeseries_id = 'com.dynatrace.builtin%3Asyntheticmonitor.availability.percent'
-	relative_time = 'day' # hour, day, month, week
-
-	dt_json = dynatrace_api_request(url, token, timeseries_id, relative_time)
+def build_availability_dict(dt_json):
 	data_result = dt_json['dataResult']
 	data = data_result['dataPoints']
 
@@ -43,8 +33,26 @@ if __name__ == '__main__':
 		new_key = f'{entities[entity_ids[0].strip()]}, {entities[entity_ids[1].strip()]}'
 		sla_dict[new_key] = avg
 
-	with open('synthetic_sla.csv', 'w') as csv_file:
+	return sla_dict
+
+def write_csv(filename, data_dict, header):
+	with open(filename, 'w') as csv_file:
 		writer = csv.writer(csv_file, lineterminator='\n')
-		writer.writerow(('Test Name, Location', 'Average availability (Percent)'))
-		for k, v in sla_dict.items():
+		writer.writerow(header)
+		for k, v in data_dict.items():
 			writer.writerow([k, v])
+
+if __name__ == '__main__':
+	# read config
+	with open('config.json') as fp:
+		config = json.load(fp)
+
+	url = config.get('url')
+	token = config.get('token')
+	timeseries_id = 'com.dynatrace.builtin%3Asyntheticmonitor.availability.percent'
+	relative_time = 'day' # hour, day, month, week
+
+	dt_json = dynatrace_api_request(url, token, timeseries_id, relative_time)
+	sla_dict = build_availability_dict(dt_json)
+	csv_header = ('Test Name, Location', 'Average availability (Percent)')
+	write_csv('synthetic_sla.csv', sla_dict, csv_header)
