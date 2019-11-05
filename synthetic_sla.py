@@ -36,7 +36,7 @@ def build_availability_dict(dt_json):
 			new_key = f'{entities[entity_ids[0].strip()]}, {entities[entity_ids[1].strip()]}'
 			sla_dict[new_key] = avg
 	except Exception as e:
-		print(e.message, e.args)
+		print(repr(e))
 
 	return sla_dict
 
