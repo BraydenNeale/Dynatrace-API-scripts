@@ -30,7 +30,7 @@ def build_availability_dict(dt_json):
 		sla_dict = {}
 		entities = data_result['entities']
 		for k,v in data.items():
-			avg = np.mean([el[1] for el in v])
+			avg = np.mean([el[1] for el in v if el[1]])
 			
 			entity_ids = k.split(',')
 			new_key = f'{entities[entity_ids[0].strip()]}, {entities[entity_ids[1].strip()]}'
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
 	url = config.get('url')
 	token = config.get('token')
-	relative_time = 'day' # hour, day, month, week
+	relative_time = 'month' # hour, day, month, week
 	csv_filename = 'synthetic_sla.csv'
 	timeseries = {
 		'Synthetic Monitor': 'com.dynatrace.builtin%3Asyntheticmonitor.availability.percent',
@@ -67,4 +67,5 @@ if __name__ == '__main__':
 		dt_json = dynatrace_api_request(url, token, t_id, relative_time)
 		sla_dict = build_availability_dict(dt_json)
 		csv_columns = ('Test Name, Location', 'Average availability (Percent)')
-		write_csv(csv_filename, sla_dict, display_name, csv_columns)
+		csv_header = f'{display_name}: last {relative_time}'
+		write_csv(csv_filename, sla_dict, csv_header, csv_columns)
