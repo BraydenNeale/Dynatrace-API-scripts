@@ -45,7 +45,7 @@ def write_csv(filename, data_dict, header, columns):
 		writer = csv.writer(csv_file, lineterminator='\n')
 		writer.writerow([header])
 		writer.writerow(columns)
-		for k, v in data_dict.items():
+		for k,v in data_dict.items():
 			writer.writerow([k, v])
 		writer.writerow([])
 
