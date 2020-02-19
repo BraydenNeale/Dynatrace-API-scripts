@@ -1,13 +1,8 @@
-# Request synthetic data from the DT API
-# Loop through each test + location
-# Record the average for test availability
-# Display each test name alongside average availability for the period
+# Get all maintenance windows from the API
+# Delete those which are older than 10 days (default)
 
 import json
-import csv
-import numpy as np
 import requests
-import pprint
 import logging
 from datetime import datetime, timedelta
 
@@ -17,7 +12,6 @@ logging.basicConfig(
 	format='%(asctime)s : %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )
-pp = pprint.PrettyPrinter()
 
 def dynatrace_api_request(url, token, request):
 	request_url = f'{url}{request}'
@@ -63,7 +57,7 @@ def delete_mw_id(mw_id, url, token):
 
 	response = requests.delete(request_url, headers=headers)
 	response.raise_for_status()
-	
+
 	logging.info(f'DELETED: {mw_id}')
 
 if __name__ == '__main__':
@@ -77,11 +71,5 @@ if __name__ == '__main__':
 	mw_get = '/api/config/v1/maintenanceWindows'
 
 	mw_json = dynatrace_api_request(url, token, mw_get)
-	old_mw_ids = get_old_mw_ids(mw_json['values'], 5)
+	old_mw_ids = get_old_mw_ids(mw_json['values'])
 	delete_mw_ids(old_mw_ids, url, token)
-
-
-
-
-
-
