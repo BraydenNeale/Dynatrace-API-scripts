@@ -1,4 +1,5 @@
 *.json
+!example.json
 *.csv
 *.log
 *.bak
