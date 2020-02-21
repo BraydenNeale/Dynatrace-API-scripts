@@ -1,0 +1,7 @@
+{
+	"url":"https://<TENANT_ID>.live.dynatrace.com",
+	"token":"<API_TOKEN>",
+	"old_user": "<OLD_USER_EMAIL>",
+	"new_user": "<NEW_USER_EMAIL>"
+}
+

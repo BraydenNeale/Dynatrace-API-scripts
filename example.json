@@ -1,4 +1,4 @@
 {
-	"url":"DT_SAAS_URL",
-	"token":"API_TOKEN"
+	"url":"https://<TENANT_ID>.live.dynatrace.com",
+	"token":"<API_TOKEN>"
 }
