@@ -12,7 +12,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 
-def dynatrace_api_request(url, token, request):
+def dynatrace_api_request(request):
 	request_url = f'{url}{request}'
 	headers = { 
 		'Accept': 'application/json', 
@@ -28,20 +28,33 @@ def get_old_owner_dashboards(old_user, db_array):
 	db_ids = []
 	logging.info('Reassigning the following dashboards:')
 	for db in db_array:
-		if db['owner'] == old_user: 
-			db_ids.append(db['id'])
-			logging.info(db)
+		if db['name'] != 'Home':
+			if db['owner'] == old_user: 
+				db_ids.append(db['id'])
+				logging.info(db)
 
 	return db_ids
 
-def reassign_old_owner_dashboards(old_db_ids, new_user, url, token):
-	for db_id in old_db_ids:
-		reassign_old_owner_dashboard(db_id, new_user, url, token)
+def get_all_dashboard_users(db_array):
+	db_owners = {}
+	for db in db_array:
+		if db['name'] != 'Home':
+			owner = db['owner']
+			db_owners.setdefault(owner, []).append(db['name'])
 
-def reassign_old_owner_dashboard(db_id, new_user, url, token):
+	for owner,names in db_owners.items():
+		logging.info(f'{owner}: {names}')
+
+	return db_owners
+
+def reassign_old_owner_dashboards(old_db_ids, new_user):
+	for db_id in old_db_ids:
+		reassign_old_owner_dashboard(db_id, new_user)
+
+def reassign_old_owner_dashboard(db_id, new_user):
 	request = f'/api/config/v1/dashboards/{db_id}'
 
-	dashboard_json = dynatrace_api_request(url, token, request)
+	dashboard_json = dynatrace_api_request(request)
 	dashboard_json['dashboardMetadata']['owner'] = new_user
 	
 	put_request_url = f'{url}{request}'
@@ -68,6 +81,7 @@ if __name__ == '__main__':
 	logging.info(f'Dashboards owned by {old_user} are being reassigned to {new_user}')
 	dashboard_get = '/api/config/v1/dashboards'
 
-	dashboard_json = dynatrace_api_request(url, token, dashboard_get)
+	dashboard_json = dynatrace_api_request(dashboard_get)
+	#get_all_dashboard_users(dashboard_json['dashboards'])
 	old_db_ids = get_old_owner_dashboards(old_user, dashboard_json['dashboards'])
-	reassign_old_owner_dashboards(old_db_ids, new_user, url, token)
+	reassign_old_owner_dashboards(old_db_ids, new_user)

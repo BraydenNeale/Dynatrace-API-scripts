@@ -13,7 +13,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 
-def dynatrace_api_request(url, token, request):
+def dynatrace_api_request(request):
 	request_url = f'{url}{request}'
 	headers = { 
 		'Accept': 'application/json', 
@@ -25,7 +25,7 @@ def dynatrace_api_request(url, token, request):
 
 	return response.json()
 
-def get_old_mw_ids(mw_array, num_days_ago=10):
+def get_old_mw_ids(mw_array, num_days_ago=14, api_timeout=False):
 	mw_ids = []
 	for mw in mw_array:
 		mw_ids.append(mw['id'])
@@ -35,19 +35,21 @@ def get_old_mw_ids(mw_array, num_days_ago=10):
 	logging.info('Deleting the following maintenance windows:')
 	for mw_id in mw_ids:
 		request = f'/api/config/v1/maintenanceWindows/{mw_id}'
-		mw_id_json = dynatrace_api_request(url, token, request)
+		mw_id_json = dynatrace_api_request(request)
 		mw_end_time = datetime.strptime(mw_id_json['schedule']['end'], '%Y-%m-%d %H:%M')
 		if old_date > mw_end_time:
 			old_mw_ids.append(mw_id)
 			logging.info(mw_id_json)
+			if api_timeout:
+				delete_mw_id(mw_id)
 
 	return old_mw_ids
 
-def delete_mw_ids(mw_ids, url, token):
+def delete_mw_ids(mw_ids):
 	for mw_id in mw_ids:
-		delete_mw_id(mw_id, url, token)
+		delete_mw_id(mw_id)
 
-def delete_mw_id(mw_id, url, token):
+def delete_mw_id(mw_id):
 	request = f'/api/config/v1/maintenanceWindows/{mw_id}'
 	request_url = f'{url}{request}'
 	headers = { 
@@ -70,6 +72,12 @@ if __name__ == '__main__':
 
 	mw_get = '/api/config/v1/maintenanceWindows'
 
-	mw_json = dynatrace_api_request(url, token, mw_get)
-	old_mw_ids = get_old_mw_ids(mw_json['values'])
-	delete_mw_ids(old_mw_ids, url, token)
+	# DT throttles API requests...
+	# When there are a lot of Maintenance windows you will get a client error with nothing deleted
+	# To progressively delete (instead of the default bulk... set api_timeout = True)
+	api_timeout = True
+	mw_json = dynatrace_api_request(mw_get)
+	old_mw_ids = get_old_mw_ids(mw_array=mw_json['values'], api_timeout=api_timeout)
+
+	if not api_timeout:
+		delete_mw_ids(old_mw_ids)
