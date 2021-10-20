@@ -29,20 +29,35 @@ from pprint import pprint
 
 def build_row_dict(row):
 	# Name, Business_Rep, Tech_Rep, Critical, Site, Applications, AppFormatted, Security, Env
+	# (TAG_NAME, CSV_COLUMN_NAME)
+	csv_tag_tuples = [
+		('name', 'Name'),
+		('domain', 'Domain'),
+		('business_rep', 'Business_Rep'),
+		('tech_rep', 'Tech_Rep'),
+		('critical', 'Critical'),
+		('site', 'Site'),
+		('applications', 'Applications'),
+		('system', 'AppFormatted'),
+		('security_zone', 'Security'),
+		('env', 'Env')
+	]
+
 	host_data = {}
 	try:
-		host_data['name'] = row.Name
-		host_data['business_rep'] = row.Business_Rep
-		host_data['tech_rep'] = row.Tech_Rep,
-		host_data['critical'] = row.Critical,
-		host_data['site'] = row.Site,
-		host_data['applications'] = row.Applications
-		host_data['system'] = row.AppFormatted
-		host_data['security_zone'] = row.Security
-		host_data['env'] = row.Env
+		#TODO improve this - tags are case sensitive
+		host_data['selector'] = f'type(host),entityName.startsWith({row.Name})'
+
+		tag_list = []
+		for tag_tuple in csv_tag_tuples:
+			tag_list.append({
+				'key': f'[API]{tag_tuple[0]}',
+				'value': getattr(row, tag_tuple[1])
+			})
 	except AttributeError as e:
 		print(e)
 
+	host_data['tags'] = tag_list
 	return host_data
 
 if __name__ == '__main__':
@@ -58,4 +73,4 @@ if __name__ == '__main__':
 	for row in df.itertuples():
 		host_data_list.append(build_row_dict(row))
 
-	pprint(host_data_list)
+	
