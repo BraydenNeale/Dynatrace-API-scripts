@@ -1,0 +1,5 @@
+{
+	"url":"https://<TENANT_ID>.live.dynatrace.com",
+	"token":"<API_TOKEN>",
+    "csv_data": ""
+}

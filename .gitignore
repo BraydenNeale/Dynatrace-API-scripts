@@ -1,6 +1,7 @@
 *.json
 !example.json
 !example_dashboard.json
-*.csv
+!example_csv.json
+csv
 *.log
 *.bak
