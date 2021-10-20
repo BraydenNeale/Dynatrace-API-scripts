@@ -23,9 +23,28 @@
 import json
 import requests
 import logging
+import urllib
 from datetime import datetime, timedelta
 import pandas as pd
 from pprint import pprint
+
+def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
+	api_path = f'{DYNATRACE_URL}/api/v2/tags?'
+	for dict in host_data_list:
+		for selector,tags in dict.items():
+			query_param = f'entitySelector={urllib.parse.quote(selector)}'
+			
+			request_url = f'{api_path}{query_param}'
+			dynatrace_post_request(request_url, DYNATRACE_TOKEN, tags)
+
+def dynatrace_post_request(request_url, token, payload):
+	headers = { 
+		'Accept': 'application/json', 
+		'Authorization': f'Api-Token {token}',
+		'Content-type': 'application/json',
+	}
+	response = requests.post(request_url, data=json.dumps(payload), headers=headers)
+	response.raise_for_status()
 
 def build_row_dict(row):
 	# Name, Business_Rep, Tech_Rep, Critical, Site, Applications, AppFormatted, Security, Env
@@ -46,7 +65,8 @@ def build_row_dict(row):
 	host_data = {}
 	try:
 		#TODO improve this - tags are case sensitive
-		host_data['selector'] = f'type(host),entityName.startsWith({row.Name})'
+		#type(host),entityName.startsWith(UATBLFM01)
+		selector = f'type(host),entityName.startsWith({row.Name})'
 
 		tag_list = []
 		for tag_tuple in csv_tag_tuples:
@@ -58,19 +78,20 @@ def build_row_dict(row):
 		print(e)
 
 	host_data['tags'] = tag_list
-	return host_data
+	return {selector: host_data}
 
 if __name__ == '__main__':
 	# read config
 	with open('config_csv.json') as fp:
 		config = json.load(fp)
 
-	url = config.get('url')
-	token = config.get('token')
-	csv_file = config.get('csv_file')
-	df = pd.read_csv(csv_file, engine='python')
+	DYNATRACE_URL = config.get('url')
+	DYNATRACE_TOKEN = config.get('token')
+	CSV_FILE = config.get('csv_file')
+	df = pd.read_csv(CSV_FILE, engine='python')
 	host_data_list = []
 	for row in df.itertuples():
 		host_data_list.append(build_row_dict(row))
 
+	create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	
