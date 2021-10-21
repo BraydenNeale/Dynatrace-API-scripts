@@ -24,9 +24,28 @@ import json
 import requests
 import logging
 import urllib
-from datetime import datetime, timedelta
 import pandas as pd
 from pprint import pprint
+
+logging.basicConfig(
+	filename='csv_to_tags.log',
+	level=logging.INFO,
+	format='%(asctime)s : %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+
+def delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
+	api_path = f'{DYNATRACE_URL}/api/v2/tags?'
+	delete_all_query = 'deleteAllWithKey=true'
+	for dict in host_data_list:
+		for selector,tags in dict.items():
+			selector_query = f'entitySelector={urllib.parse.quote(selector)}'
+			for tag in tags.get('tags'):
+				key = tag.get('key')
+				key_query = f'key={urllib.parse.quote(key)}'
+				query_param = '&'.join([key_query, delete_all_query, selector_query])
+				request_url = f'{api_path}{query_param}'
+				dynatrace_delete_request(request_url, DYNATRACE_TOKEN)
 
 def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 	api_path = f'{DYNATRACE_URL}/api/v2/tags?'
@@ -36,6 +55,14 @@ def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 			
 			request_url = f'{api_path}{query_param}'
 			dynatrace_post_request(request_url, DYNATRACE_TOKEN, tags)
+
+def dynatrace_delete_request(request_url, token):
+	headers = { 
+		'Accept': 'application/json', 
+		'Authorization': f'Api-Token {token}'
+	}
+	response = requests.delete(request_url, headers=headers)
+	response.raise_for_status()
 
 def dynatrace_post_request(request_url, token, payload):
 	headers = { 
@@ -88,10 +115,17 @@ if __name__ == '__main__':
 	DYNATRACE_URL = config.get('url')
 	DYNATRACE_TOKEN = config.get('token')
 	CSV_FILE = config.get('csv_file')
+	CREATE_TAGS = config.get('create_tags')
+	DELETE_TAGS = config.get('delete_tags')
+
 	df = pd.read_csv(CSV_FILE, engine='python')
 	host_data_list = []
 	for row in df.itertuples():
 		host_data_list.append(build_row_dict(row))
-
-	create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
+	if DELETE_TAGS:
+		print('delete')
+		delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
+	if CREATE_TAGS:
+		print('create')
+		create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	
