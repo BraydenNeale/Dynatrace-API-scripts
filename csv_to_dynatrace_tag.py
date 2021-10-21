@@ -37,15 +37,22 @@ logging.basicConfig(
 def delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 	api_path = f'{DYNATRACE_URL}/api/v2/tags?'
 	delete_all_query = 'deleteAllWithKey=true'
+
 	for dict in host_data_list:
 		for selector,tags in dict.items():
 			selector_query = f'entitySelector={urllib.parse.quote(selector)}'
 			for tag in tags.get('tags'):
 				key = tag.get('key')
+				pprint(f'{key} - {selector}')
 				key_query = f'key={urllib.parse.quote(key)}'
 				query_param = '&'.join([key_query, delete_all_query, selector_query])
 				request_url = f'{api_path}{query_param}'
-				dynatrace_delete_request(request_url, DYNATRACE_TOKEN)
+				#pprint(request_url)
+				try:
+					dynatrace_delete_request(request_url, DYNATRACE_TOKEN)
+				except requests.exceptions.HTTPError as e:
+					# Might not be tagged... so just ignore and continue
+					pass
 
 def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 	api_path = f'{DYNATRACE_URL}/api/v2/tags?'
@@ -118,14 +125,15 @@ if __name__ == '__main__':
 	CREATE_TAGS = config.get('create_tags')
 	DELETE_TAGS = config.get('delete_tags')
 
+	# Load CSV and build tagging dictionary
 	df = pd.read_csv(CSV_FILE, engine='python')
 	host_data_list = []
 	for row in df.itertuples():
 		host_data_list.append(build_row_dict(row))
+	
+	# Dynatrace APIs
 	if DELETE_TAGS:
-		print('delete')
 		delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	if CREATE_TAGS:
-		print('create')
 		create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	
