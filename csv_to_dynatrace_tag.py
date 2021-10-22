@@ -173,7 +173,13 @@ def get_csv_tag_mapping():
 	logging.info(f'(TAG, CSV_COLUMN): {csv_tag_tuples}')
 	return csv_tag_tuples
 
+"""
+Set config in config_csv.json (copy example_csv.json)
+Usage: py .\csv_to_dynatrace_tag.py
+"""
 if __name__ == '__main__':
+	log_file = logging.getLogger().handlers[0].baseFilename
+
 	# Read config
 	with open('config_csv.json') as fp:
 		config = json.load(fp)
@@ -204,4 +210,4 @@ if __name__ == '__main__':
 		print('Creating tags')
 		create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	
-	print('Done')
+	print(f'Done - Check logs in "{logging.getLogger().handlers[0].baseFilename}"')
