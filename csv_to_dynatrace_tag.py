@@ -169,8 +169,7 @@ def get_csv_tag_mapping():
 		('applications', 'Applications'),
 		('system', 'AppFormatted'),
 		('security_zone', 'Security_Zone_Level'),
-		('env', 'Env'),
-		('test', 'test')
+		('env', 'Env')
 	]
 	logging.info('\n***** TAG -> CSV *****')
 	logging.info(f'(TAG, CSV_COLUMN): {csv_tag_tuples}')
