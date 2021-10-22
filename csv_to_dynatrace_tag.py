@@ -29,7 +29,6 @@ import requests
 import logging
 import urllib
 import pandas as pd
-from pprint import pprint
 
 logging.basicConfig(
 	filename='csv_to_tags.log',
@@ -63,7 +62,7 @@ def delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 					pass
 
 """
-# CREATE all of the tags in Dynatrace
+CREATE all of the tags in Dynatrace
 """
 def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 	logging.info('\n***** CREATING TAGS *****')
@@ -154,21 +153,19 @@ Define the CSV columns to fetch
 Using:
 Name, Business_Rep, Tech_Rep, Critical, Site, 
 Applications, AppFormatted, Security, Env
-
-Tuple:
-(TAG_NAME, CSV_COLUMN_NAME)
 """
 def get_csv_tag_mapping():
+	# (TAG_NAME, CSV_COLUMN_NAME)
 	csv_tag_tuples = [
 		('name', 'Name'),
 		('domain', 'Domain'),
-		('business_rep', 'Business Rep'),
-		('tech_rep', 'Tech Rep'),
-		('critical', 'Critical (Low, High)'),
+		('business_rep', 'Business_Rep'),
+		('tech_rep', 'Tech_Rep'),
+		('critical', 'Critical'),
 		('site', 'Site'),
 		('applications', 'Applications'),
 		('system', 'AppFormatted'),
-		('security_zone', 'Security Zone Level'),
+		('security_zone', 'Security_Zone_Level'),
 		('env', 'Env'),
 		('test', 'test')
 	]
