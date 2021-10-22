@@ -1,25 +1,29 @@
-# Generate list of known servers and expected tagging keys:
-# e.g. CSV: 
-# Hostname | Site | Zone | Application | Environment | System | Vendor | Unit |
+"""
+Generate list of known servers and expected tagging keys:
+e.g. CSV: 
+Hostname | Site | Zone | Application | Environment | System | Vendor | Unit |
 
-# For each Item in the list:
-#     use hostname column for the entity selector: type(host),tag("hostname:<HOST_NAME>”)
-#     For each additional column in the CSV (e.g. site, zone)
-#         Create an API tag with key=[API]<COLUMN_NAME> and value=<CELL_VALUE> (e.g. [API]Environment=PROD)
-#     Add each tag to JSON e.g.
-#         {
-#           "tags": [
-#             {
-#               "key": "[API]Environment",
-#               "value": "PROD"
-#             },
-#             {
-#               "key": "[API]Application",
-#               "value":"MyApp"
-#             }
-#           ]
-#         }
-#     Post json payload to the Dynatrace tagging API: /api/v2/tags?entitySelector=<ENTITY_SELECTOR> 
+Psuedo code:
+For each row in the csv file
+    Use the hostname column for the Dynatrace entity selector: type(host),tag("hostname:<HOST_NAME>”)
+    For each additional column in the CSV (e.g. site, zone)
+        Create an API tag with key=[API]<COLUMN_NAME> and value=<CELL_VALUE> (e.g. [API]Environment=PROD)
+    Add each tag to the Dynatrace JSON format e.g.
+        {
+          "tags": [
+            {
+              "key": "[API]Environment",
+              "value": "PROD"
+            },
+            {
+              "key": "[API]Application",
+              "value":"MyApp"
+            }
+          ]
+        }
+	[Optional] Delete existing keys from the tagging API (avoid duplicates and replace the old vals)
+    Post json payload to the Dynatrace tagging API: /api/v2/tags?entitySelector=<ENTITY_SELECTOR> 
+"""
 import json
 import requests
 import logging
@@ -66,7 +70,7 @@ def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 	for dict in host_data_list:
 		for selector,tags in dict.items():
 			query_param = f'entitySelector={urllib.parse.quote(selector)}'
-			
+			logging.info(f'Tagging: selector = {selector}')
 			request_url = f'{api_path}{query_param}'
 			try:
 				dynatrace_post_request(request_url, DYNATRACE_TOKEN, tags)
@@ -183,6 +187,7 @@ if __name__ == '__main__':
 
 	# Load CSV and build tagging dictionary
 	logging.info('\n***** BUILDING TAG DICTIONARY *****')
+	print('Building tag dictionary')
 	df = pandas.read_csv(CSV_FILE, engine='python')
 	host_data_list = []
 	for row in df.itertuples():
@@ -190,7 +195,10 @@ if __name__ == '__main__':
 	
 	# Dynatrace APIs
 	if DELETE_TAGS:
+		print('Deleting tags')
 		delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	if CREATE_TAGS:
+		print('Creating tags')
 		create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN)
 	
+	print('Done')
