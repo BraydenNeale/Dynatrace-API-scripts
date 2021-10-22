@@ -118,7 +118,7 @@ def build_row_dict(csv_mapping, row):
 	selector = None
 		
 	hostname = getattr(row, 'Name', None)
-	if hostname is not None:
+	if csv_cell_isvalid(hostname):
 		#TODO improve this selector 
 		#EntityName selector is at risk of name changes
 		#but tags are case sensitive, so not reliable with data entry
@@ -127,7 +127,7 @@ def build_row_dict(csv_mapping, row):
 		for tag,csv_col in csv_mapping:
 			tag_key = f'[API]{tag}'
 			tag_value = getattr(row, csv_col, None)
-			if (tag_value is not None) and (not pd.isnull(tag_value)):
+			if csv_cell_isvalid(tag_value):
 				tag_list.append({
 					'key': tag_key,
 					'value': tag_value
@@ -140,6 +140,9 @@ def build_row_dict(csv_mapping, row):
 		row_dict = {selector: host_data}
 	
 	return row_dict
+
+def csv_cell_isvalid(cell):
+	return (cell is not None) and (not pd.isnull(cell))
 
 def log_config(DYNATRACE_URL, CSV_FILE, CREATE_TAGS, DELETE_TAGS):
 	logging.info('\n***** CONFIG *****')
