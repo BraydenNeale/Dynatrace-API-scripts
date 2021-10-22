@@ -28,7 +28,7 @@ import json
 import requests
 import logging
 import urllib
-import pandas
+import pandas as pd
 from pprint import pprint
 
 logging.basicConfig(
@@ -61,6 +61,7 @@ def delete_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 				except requests.exceptions.HTTPError as e:
 					# Might not be tagged... so just ignore and continue
 					pass
+
 """
 # CREATE all of the tags in Dynatrace
 """
@@ -76,6 +77,7 @@ def create_tags_in_dynatrace(host_data_list, DYNATRACE_URL, DYNATRACE_TOKEN):
 				dynatrace_post_request(request_url, DYNATRACE_TOKEN, tags)
 			except requests.exceptions.HTTPError as e:
 				logging.warning(e)
+
 """"
 GENERAL - Send a DELETE request to the Dynatrace API
 """
@@ -86,6 +88,7 @@ def dynatrace_delete_request(request_url, token):
 	}
 	response = requests.delete(request_url, headers=headers)
 	response.raise_for_status()
+
 """"
 GENERAL - Send a POST request to the Dynatrace API
 """
@@ -114,25 +117,27 @@ def build_row_dict(csv_mapping, row):
 	host_data = {}
 	tag_list = []
 	selector = None
-	try:
+		
+	hostname = getattr(row, 'Name', None)
+	if hostname is not None:
 		#TODO improve this selector 
 		#EntityName selector is at risk of name changes
 		#but tags are case sensitive, so not reliable with data entry
 		#type(host),entityName.startsWith(UATBLFM01)
-		hostname = row.Name
 		selector = f'type(host),entityName.startsWith({hostname})'
-		for tag_tuple in csv_tag_tuples:
-			tag_list.append({
-				'key': f'[API]{tag_tuple[0]}',
-				'value': getattr(row, tag_tuple[1])
-			})
+		for tag,csv_col in csv_mapping:
+			tag_key = f'[API]{tag}'
+			tag_value = getattr(row, csv_col, None)
+			if (tag_value is not None) and (not pd.isnull(tag_value)):
+				tag_list.append({
+					'key': tag_key,
+					'value': tag_value
+				})
+			else:
+				logging.warning(f'{hostname} - Invalid column: {csv_col}')
+				
 		logging.info(f'{hostname} - {tag_list}')
-	except AttributeError as e:
-		logging.warning(e)
-
-	host_data['tags'] = tag_list
-
-	if selector is not None:
+		host_data['tags'] = tag_list
 		row_dict = {selector: host_data}
 	
 	return row_dict
@@ -157,14 +162,15 @@ def get_csv_tag_mapping():
 	csv_tag_tuples = [
 		('name', 'Name'),
 		('domain', 'Domain'),
-		('business_rep', 'Business_Rep'),
-		('tech_rep', 'Tech_Rep'),
-		('critical', 'Critical'),
+		('business_rep', 'Business Rep'),
+		('tech_rep', 'Tech Rep'),
+		('critical', 'Critical (Low, High)'),
 		('site', 'Site'),
 		('applications', 'Applications'),
 		('system', 'AppFormatted'),
-		('security_zone', 'Security'),
-		('env', 'Env')
+		('security_zone', 'Security Zone Level'),
+		('env', 'Env'),
+		('test', 'test')
 	]
 	logging.info('\n***** TAG -> CSV *****')
 	logging.info(f'(TAG, CSV_COLUMN): {csv_tag_tuples}')
@@ -188,7 +194,7 @@ if __name__ == '__main__':
 	# Load CSV and build tagging dictionary
 	logging.info('\n***** BUILDING TAG DICTIONARY *****')
 	print('Building tag dictionary')
-	df = pandas.read_csv(CSV_FILE, engine='python')
+	df = pd.read_csv(CSV_FILE, engine='python')
 	host_data_list = []
 	for row in df.itertuples():
 		host_data_list.append(build_row_dict(csv_tag_tuples, row))
