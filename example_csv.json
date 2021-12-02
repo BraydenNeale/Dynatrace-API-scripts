@@ -1,7 +1,0 @@
-{
-	"url":"https://<TENANT_ID>.live.dynatrace.com",
-	"token":"<API_TOKEN>",
-    "csv_file": "./csv/fmg_masterdata_snippet.csv",
-	"create_tags": true,
-	"delete_tags": true
-}

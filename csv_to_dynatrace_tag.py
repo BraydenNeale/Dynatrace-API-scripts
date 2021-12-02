@@ -29,6 +29,7 @@ import requests
 import logging
 import urllib
 import pandas as pd
+import os
 
 logging.basicConfig(
 	filename='csv_to_tags.log',
@@ -186,8 +187,10 @@ if __name__ == '__main__':
 	with open('config_csv.json') as fp:
 		config = json.load(fp)
 
-	DYNATRACE_URL = config.get('url')
-	DYNATRACE_TOKEN = config.get('token')
+	URL_ENV_VAR = config.get('url')
+	DYNATRACE_URL = os.environ.get(URL_ENV_VAR)
+	TOKEN_ENV_VAR = config.get('token')
+	DYNATRACE_TOKEN = os.environ.get(TOKEN_ENV_VAR)
 	CSV_FILE = config.get('csv_file')
 	CREATE_TAGS = config.get('create_tags')
 	DELETE_TAGS = config.get('delete_tags')

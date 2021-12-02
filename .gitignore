@@ -2,6 +2,7 @@
 !example.json
 !example_dashboard.json
 !example_csv.json
+!config_csv.json
 csv
 *.log
 *.bak

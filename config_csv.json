@@ -1,0 +1,7 @@
+{
+	"url":"DYNATRACE_URL",
+	"token":"DYNATRACE_TOKEN",
+    "csv_file": "./csv/fmg_masterdata.csv",
+	"create_tags": false,
+	"delete_tags": false
+}
